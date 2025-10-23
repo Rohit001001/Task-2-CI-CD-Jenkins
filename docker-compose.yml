@@ -1,7 +1,9 @@
-version : "3.3"
-services : 
+version: "3.3"
+services:
   web:
-    build : .
-    ports :
+    build: .
+    ports:
       - "8000:80"
+    volumes:
+      - ./ :/usr/share/nginx/html
 
