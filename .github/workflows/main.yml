@@ -1,23 +1,60 @@
-name: Portfolio Deployment
+name: Frontend CI/CD Pipeline - Deploy to EC2
 
 on:
   push:
     branches:
-    - main
+      - main  # Runs this workflow whenever you push to main branch
 
 jobs:
-  build-and-deploy:
+  deploy:
+    name: Build and Deploy Frontend to EC2
     runs-on: ubuntu-latest
+
     steps:
-    - name: Checkout
-      uses: actions/checkout@v1
+      # 1️⃣ Checkout your latest code
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-    - name: Configure AWS Credentials
-      uses: aws-actions/configure-aws-credentials@v1
-      with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: us-east-1
+      # 2️⃣ (Optional) If your frontend uses npm (e.g. React, Angular, Vue)
+      - name: Install and build frontend
+        run: |
+          if [ -f "package.json" ]; then
+            echo "📦 Installing dependencies..."
+            npm install
+            echo "🏗️ Building frontend..."
+            npm run build
+          else
+            echo "⚠️ No package.json found, skipping build."
+          fi
 
-    - name: Deploy static site to S3 bucket
-      run: aws s3 sync . s3://tws-junoon --delete
+      # 3️⃣ Deploy built files or HTML/CSS/JS to EC2
+      - name: 🚀 Deploy to EC2 via SSH
+        uses: appleboy/ssh-action@v0.1.10
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_KEY }}
+          script: |
+            echo "🔐 Connecting to EC2..."
+
+            # Move into your project folder (change this path if different)
+            cd ~/Task-2-Set-up-a-basic-Jenkins-pipeline-for-deploying-an-application
+
+            echo "📥 Pulling latest code..."
+            git pull origin main
+
+            # If you’re serving static files with Nginx or Apache:
+            echo "🧹 Removing old files..."
+            sudo rm -rf /var/www/html/*
+
+            echo "📦 Copying new build files..."
+            if [ -d "build" ]; then
+              sudo cp -r build/* /var/www/html/
+            else
+              sudo cp -r * /var/www/html/
+            fi
+
+            echo "🔁 Restarting NGINX..."
+            sudo systemctl restart nginx
+
+            echo "✅ Frontend deployment completed!"
