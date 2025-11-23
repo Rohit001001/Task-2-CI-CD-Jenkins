@@ -10,41 +10,31 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-
-      # Step 1: Checkout the repository code
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # Step 2: Setup SSH Private Key
       - name: Setup SSH Key
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.EC2_KEY }}" > ~/.ssh/key.pem
           chmod 600 ~/.ssh/key.pem
 
-      # Step 3: Deploy Application on EC2
       - name: Deploy to EC2 via SSH
         run: |
           ssh -o StrictHostKeyChecking=no -i ~/.ssh/key.pem ubuntu@13.201.222.164 << 'EOF'
             echo "Connected successfully to EC2"
 
-            # Create app directory if not exists
             mkdir -p /home/ubuntu/app
             cd /home/ubuntu/app
 
-            echo "Pulling latest code from GitHub..."
             sudo rm -rf /home/ubuntu/app/*
             sudo git clone https://github.com/${{ github.repository }} /home/ubuntu/app
 
-            echo "Building Docker image..."
-            cd /home/ubuntu/app
             sudo docker build -t webapp .
 
-            echo "Stopping old container..."
             sudo docker stop webapp || true
             sudo docker rm webapp || true
 
-            echo "Running new container..."
             sudo docker run -d -p 80:80 --name webapp webapp
 
             echo "Deployment completed successfully!"
