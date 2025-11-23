@@ -17,5 +17,8 @@ resource "aws_instance" "my_ec2" {
     apt-get install -y docker.io
     systemctl start docker
     systemctl enable docker
+ # Create app directory
+  mkdir -p /home/ubuntu/app
+  chmod -R 777 /home/ubuntu/app
   EOF
 }
