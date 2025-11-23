@@ -27,8 +27,10 @@ jobs:
             mkdir -p /home/ubuntu/app
             cd /home/ubuntu/app
 
+            mkdir -p /home/ubuntu/app
             sudo rm -rf /home/ubuntu/app/*
             sudo git clone https://github.com/${{ github.repository }} /home/ubuntu/app
+            
 
             sudo docker build -t webapp .
 
